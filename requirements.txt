@@ -3,3 +3,5 @@ selenium==3.141.0
 axe-selenium-python==2.1.6
 webdriver-manager==3.4.2
 gunicorn
+jinja2
+behave
