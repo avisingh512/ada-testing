@@ -1,7 +1,8 @@
-﻿Flask==2.0.1
-selenium==3.141.0
-axe-selenium-python==2.1.6
-webdriver-manager==3.4.2
+﻿Flask
+Werkzeug
+selenium
+axe-selenium-python
+webdriver-manager
 gunicorn
 jinja2
 behave
