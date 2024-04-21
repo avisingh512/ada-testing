@@ -1,18 +1,37 @@
-import subprocess
-import json
+from selenium import webdriver
+from axe_selenium_python import Axe
 
-def identify_personas(url):
-    # Run Lighthouse audit using subprocess and write the output to a file
-    cmd = f"lighthouse {url} --output=json --quiet --output-path=audit_result.json"
-    subprocess.run(cmd, shell=True)
+# Function to run accessibility tests using axe-core and Selenium
+def run_accessibility_tests(url):
+    options = webdriver.ChromeOptions()
+    options.add_argument('--headless')  # Run Chrome in headless mode
+    driver = webdriver.Chrome(options=options)
+    driver.get(url)
 
-    # Read the audit result from the file
-    with open('audit_result.json', 'r', encoding='utf-8') as f:
-        audit_result = json.load(f)
+    # Initialize axe for accessibility testing
+    axe = Axe(driver)
+    axe.inject()  # Inject the axe-core javascript into the page
+    results = axe.run()  # Run accessibility tests
 
-    # Define a mapping of issue IDs to personas
-    persona_mapping = {
-        'cognitive': [
+    driver.quit()
+    return results
+
+# Function to identify personas based on accessibility issues
+def identify_personas(axe_results):
+    personas = set()
+    for violation in axe_results['violations']:
+        # Visual Impairments: Issues primarily affecting users with visual disabilities
+        visual_issues = ['image-alt', 'object-alt', 'image-redundant-alt', 'input-image-alt', 'color-contrast']
+        if any(issue in violation['id'] for issue in visual_issues):
+            personas.add('Visually Impaired')
+
+        # Auditory Impairments: Issues that affect users who are deaf or hard of hearing
+        auditory_issues = ['audio-caption', 'video-caption', 'video-description']
+        if any(issue in violation['id'] for issue in auditory_issues):
+            personas.add('Auditory Impaired')
+
+        # Cognitive Impairments: Issues affecting users with cognitive or neurological disabilities
+        cognitive_issues = [
             'aria-', 'label', 'definition-list', 'link-in-text-block', 'document-title', 
             'duplicate-id-active', 'frame-title', 'html-has-lang', 'html-lang-valid', 
             'html-xml-lang-mismatch', 'layout-table', 'list', 'listitem', 'marquee', 
@@ -28,33 +47,19 @@ def identify_personas(url):
             'aria-modal', 'aria-multiline', 'aria-multiselectable', 'aria-orientation', 
             'aria-placeholder', 'aria-posinset', 'aria-readonly', 'aria-required', 'aria-selected', 
             'aria-setsize', 'aria-sort', 'aria-valuemax', 'aria-valuemin', 'aria-valuenow', 
-            'aria-valuetext'
-        ],
-        'visual': [
-            'image-alt', 'object-alt', 'image-redundant-alt', 'input-image-alt', 
-            'color-contrast'
-        ],
-        'auditory': [
-            'audio-caption', 'video-caption', 'video-description'
-        ],
-        'motor': [
-            'button-name', 'tabindex'
+            'aria-valuetext', 'landmark-one-main'
         ]
-    }
+        if any(issue in violation['id'] for issue in cognitive_issues):
+            personas.add('Cognitively Impaired')
 
-    # Extract accessibility issues
-    try:
-        accessibility_issues = audit_result['categories']['accessibility']['auditRefs']
-    except KeyError:
-        print("Audit result format is unexpected. Unable to extract accessibility issues.")
-        return set()
+        # Motor Impairments: Issues affecting users with limited fine motor control
+        motor_issues = ['button-name', 'tabindex']
+        if any(issue in violation['id'] for issue in motor_issues):
+            personas.add('Motor Impaired')
 
-    # Map accessibility issues to personas
-    personas = set()
-    for issue in accessibility_issues:
-        issue_id = issue['id']
-        for persona, keywords in persona_mapping.items():
-            if any(keyword in issue_id for keyword in keywords):
-                personas.add(persona)
+        # Users who rely on screen readers or other assistive technologies
+        assistive_tech_issues = ['aria-', 'role-', 'semantic-', 'status-messages']
+        if any(issue in violation['id'] for issue in assistive_tech_issues):
+            personas.add('Assistive Technology Users')
 
     return personas
