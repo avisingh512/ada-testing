@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Accessibility Test Dashboard</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .result-section {
+            margin-top: 20px;
+        }
+        .status-passed {
+            color: #28a745;
+        }
+        .status-failed {
+            color: #dc3545;
+        }
+    </style>
+</head>
+<body>
+    <div class="container mt-5">
+        <h1 class="text-center">Accessibility Test Interface</h1>
+        <div class="row mt-4 justify-content-center">
+            <div class="col-md-6">
+                <input type="text" id="url" name="url" class="form-control" placeholder="Enter Website URL" required>
+            </div>
+            <div class="col-md-2">
+                <button type="button" class="btn btn-primary btn-block" onclick="testWebsite()">Test Website</button>
+            </div>
+        </div>
+        <div id="results" class="result-section"></div>
+    </div>
+
+    <script>
+        function testWebsite() {
+            const url = document.getElementById('url').value;
+            fetch('/test', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: `url=${encodeURIComponent(url)}`
+            })
+            .then(response => response.json())
+            .then(data => {
+                const resultsContainer = document.getElementById('results');
+                resultsContainer.innerHTML = ''; // Clear previous results
+
+                // Create sections for passed and failed
+                for (const status in data) {
+                    let section = document.createElement('div');
+                    section.classList.add('result-section');
+
+                    let title = document.createElement('h4');
+                    title.innerText = status;
+                    title.className = status === 'Passed' ? 'status-passed' : 'status-failed';
+                    section.appendChild(title);
+
+                    data[status].forEach(item => {
+                        let card = document.createElement('div');
+                        card.classList.add('card', 'mb-3');
+
+                        let cardBody = document.createElement('div');
+                        cardBody.classList.add('card-body');
+
+                        let cardTitle = document.createElement('h5');
+                        cardTitle.classList.add('card-title');
+                        cardTitle.innerText = item['Persona'];
+                        cardBody.appendChild(cardTitle);
+
+                        let cardText = document.createElement('p');
+                        cardText.classList.add('card-text');
+                        cardText.innerHTML = item['Details'].join(', ') || 'No details';
+                        cardBody.appendChild(cardText);
+
+                        card.appendChild(cardBody);
+                        section.appendChild(card);
+                    });
+
+                    resultsContainer.appendChild(section);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+        }
+    </script>
+
+    <!-- Bootstrap Bundle with Popper -->
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

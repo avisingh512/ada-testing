@@ -1,4 +1,4 @@
-from execute_test_cases import execute_test_cases
+from execute_test_cases import execute_dynamic_bdd, execute_test_cases
 from generate_bdd_test_cases import generate_bdd_test_cases
 from identify_personas import identify_personas, run_accessibility_tests
 
@@ -8,7 +8,7 @@ def main():
     axe_results = run_accessibility_tests(url)
     personas = identify_personas(axe_results)
     execute_test_cases(personas, url)
-
+    execute_dynamic_bdd(url, personas, axe_results)
 
 if __name__ == "__main__":
     main()
