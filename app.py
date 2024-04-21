@@ -1,7 +1,7 @@
 from flask import Flask, request, jsonify, render_template
 from selenium import webdriver
 from axe_selenium_python import Axe
-import json
+from selenium.webdriver.chrome.options import Options
 
 from identify_personas import categorize_personas_by_status, identify_personas, identify_personas_with_violations_and_passes
 
@@ -9,8 +9,10 @@ app = Flask(__name__)
 
 # Reuse the existing functions for testing and persona identification
 def run_accessibility_tests(url):
-    options = webdriver.ChromeOptions()
-    options.add_argument('--headless')  
+    options = Options()
+    options.add_argument("--headless")
+    options.add_argument("--no-sandbox")
+    options.add_argument("--disable-dev-shm-usage")
     driver = webdriver.Chrome(options=options)
     driver.get(url)
     axe = Axe(driver)
