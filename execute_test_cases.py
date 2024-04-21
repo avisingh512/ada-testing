@@ -1,34 +1,24 @@
-import allure
-from allure_commons.types import AttachmentType
 from selenium import webdriver
-import re
-from behave import given, when, then  # Assuming these are the BDD decorators you're using
+from behave import runner, configuration
+from behave import given, then
 
 def execute_test_cases(test_cases, url):
-    driver = webdriver.Chrome()
+    options = webdriver.ChromeOptions()
+    options.add_argument("--ignore-ssl-errors=yes")
+    options.add_argument("--ssl-protocol=TLSv1.2")
+    driver = webdriver.Chrome(options=options)
+    context = {}
+    context['driver'] = driver
+    context['url'] = url
 
-    # Define the BDD decorators
-    def step(arg):
-        pass
+    custom_config = configuration.Configuration()
+    custom_config.feature_dirs = []  # Set feature directories to an empty list
+    behave_runner = runner.Runner(config=custom_config)
+    behave_runner.feature_locations = []  # Set feature locations to an empty list
 
-    # Assume these are the BDD decorators you're using
-    given = step
-    when = step
-    then = step
-
+    behave_runner.context = context
     for test_case in test_cases:
-        # Extract the persona from the test_case using regex
-        match = re.search(r"the website is accessible for (.+?) users", test_case)
-        test_case_name = match.group(1) if match else "Unknown"
-
-        with allure.step(f"Executing test case: {test_case_name}"):
-            try:
-                if isinstance(test_case, str) and test_case.strip():
-                    exec(test_case)
-
-                allure.attach(body=f"Test case {test_case_name} passed", name="test_result", attachment_type=AttachmentType.TEXT)
-            except AssertionError as e:
-                allure.attach(body=f"Test case {test_case_name} failed: {e}", name="test_result", attachment_type=AttachmentType.TEXT)
-                raise
-
+        compiled_test_case = compile(test_case, '<string>', 'exec')
+        eval(compiled_test_case, globals(), locals())
+    behave_runner.run()
     driver.quit()

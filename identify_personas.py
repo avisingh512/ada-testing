@@ -11,101 +11,50 @@ def identify_personas(url):
         audit_result = json.load(f)
 
     # Define a mapping of issue IDs to personas
-    issue_persona_mapping = {
-        'link-in-text-block': 'Cognitive',
-        'color-contrast': 'Visual',
-        'image-alt': 'Visual',
-        'label': 'Cognitive',
-        'aria-allowed-attr': 'Cognitive',
-        'aria-required-attr': 'Cognitive',
-        'aria-required-children': 'Cognitive',
-        'aria-required-parent': 'Cognitive',
-        'aria-roles': 'Cognitive',
-        'aria-valid-attr-value': 'Cognitive',
-        'aria-valid-attr': 'Cognitive',
-        'aria-allowed-role': 'Cognitive',
-        'aria-hidden-body': 'Cognitive',
-        'aria-hidden-focus': 'Cognitive',
-        'aria-input-field-name': 'Cognitive',
-        'aria-toggle-field-name': 'Cognitive',
-        'aria-progressbar-name': 'Cognitive',
-        'aria-meter-name': 'Cognitive',
-        'aria-radiogroup': 'Cognitive',
-        'aria-range': 'Cognitive',
-        'aria-required-children': 'Cognitive',
-        'aria-required-parent': 'Cognitive',
-        'aria-roledescription': 'Cognitive',
-        'aria-activedescendant': 'Cognitive',
-        'aria-autocomplete': 'Cognitive',
-        'aria-checked': 'Cognitive',
-        'aria-disabled': 'Cognitive',
-        'aria-expanded': 'Cognitive',
-        'aria-haspopup': 'Cognitive',
-        'aria-level': 'Cognitive',
-        'aria-modal': 'Cognitive',
-        'aria-multiline': 'Cognitive',
-        'aria-multiselectable': 'Cognitive',
-        'aria-orientation': 'Cognitive',
-        'aria-placeholder': 'Cognitive',
-        'aria-posinset': 'Cognitive',
-        'aria-readonly': 'Cognitive',
-        'aria-required': 'Cognitive',
-        'aria-selected': 'Cognitive',
-        'aria-setsize': 'Cognitive',
-        'aria-sort': 'Cognitive',
-        'aria-valuemax': 'Cognitive',
-        'aria-valuemin': 'Cognitive',
-        'aria-valuenow': 'Cognitive',
-        'aria-valuetext': 'Cognitive',
-        'audio-caption': 'Auditory',
-        'button-name': 'Motor',
-        'definition-list': 'Cognitive',
-        'dlitem': 'Cognitive',
-        'document-title': 'Cognitive',
-        'duplicate-id-active': 'Cognitive',
-        'frame-title': 'Cognitive',
-        'html-has-lang': 'Cognitive',
-        'html-lang-valid': 'Cognitive',
-        'html-xml-lang-mismatch': 'Cognitive',
-        'image-redundant-alt': 'Visual',
-        'input-image-alt': 'Visual',
-        'label-content-name-mismatch': 'Cognitive',
-        'label-title-only': 'Cognitive',
-        'layout-table': 'Cognitive',
-        'link-name': 'Cognitive',
-        'list': 'Cognitive',
-        'listitem': 'Cognitive',
-        'marquee': 'Cognitive',
-        'meta-refresh': 'Cognitive',
-        'meta-viewport': 'Cognitive',
-        'object-alt': 'Visual',
-        'radiogroup': 'Cognitive',
-        'region': 'Cognitive',
-        'scope-attr-valid': 'Cognitive',
-        'scrollable-region-focusable': 'Cognitive',
-        'select-name': 'Cognitive',
-        'server-side-image-map': 'Cognitive',
-        'tabindex': 'Motor',
-        'td-has-header': 'Cognitive',
-        'th-has-data-cells': 'Cognitive',
-        'valid-lang': 'Cognitive',
-        'video-caption': 'Auditory',
-        'video-description': 'Auditory'
+    persona_mapping = {
+        'cognitive': [
+            'aria-', 'label', 'definition-list', 'link-in-text-block', 'document-title', 
+            'duplicate-id-active', 'frame-title', 'html-has-lang', 'html-lang-valid', 
+            'html-xml-lang-mismatch', 'layout-table', 'list', 'listitem', 'marquee', 
+            'meta-refresh', 'meta-viewport', 'radiogroup', 'region', 'scope-attr-valid', 
+            'scrollable-region-focusable', 'select-name', 'server-side-image-map', 
+            'tabindex', 'td-has-header', 'th-has-data-cells', 'valid-lang', 'label-content-name-mismatch', 
+            'label-title-only', 'aria-allowed-attr', 'aria-required-attr', 'aria-required-children', 
+            'aria-required-parent', 'aria-roles', 'aria-valid-attr-value', 'aria-valid-attr', 
+            'aria-allowed-role', 'aria-hidden-body', 'aria-hidden-focus', 'aria-input-field-name', 
+            'aria-toggle-field-name', 'aria-progressbar-name', 'aria-meter-name', 'aria-radiogroup', 
+            'aria-range', 'aria-roledescription', 'aria-activedescendant', 'aria-autocomplete', 
+            'aria-checked', 'aria-disabled', 'aria-expanded', 'aria-haspopup', 'aria-level', 
+            'aria-modal', 'aria-multiline', 'aria-multiselectable', 'aria-orientation', 
+            'aria-placeholder', 'aria-posinset', 'aria-readonly', 'aria-required', 'aria-selected', 
+            'aria-setsize', 'aria-sort', 'aria-valuemax', 'aria-valuemin', 'aria-valuenow', 
+            'aria-valuetext'
+        ],
+        'visual': [
+            'image-alt', 'object-alt', 'image-redundant-alt', 'input-image-alt', 
+            'color-contrast'
+        ],
+        'auditory': [
+            'audio-caption', 'video-caption', 'video-description'
+        ],
+        'motor': [
+            'button-name', 'tabindex'
+        ]
     }
-
 
     # Extract accessibility issues
     try:
         accessibility_issues = audit_result['categories']['accessibility']['auditRefs']
     except KeyError:
-        print("Failed to find 'categories.accessibility.auditRefs' in audit result.")
-        return None
+        print("Audit result format is unexpected. Unable to extract accessibility issues.")
+        return set()
 
     # Map accessibility issues to personas
     personas = set()
     for issue in accessibility_issues:
         issue_id = issue['id']
-        if issue_id in issue_persona_mapping:
-            personas.add(issue_persona_mapping[issue_id])
+        for persona, keywords in persona_mapping.items():
+            if any(keyword in issue_id for keyword in keywords):
+                personas.add(persona)
 
     return personas
